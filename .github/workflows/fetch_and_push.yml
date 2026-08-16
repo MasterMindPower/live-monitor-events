@@ -2,10 +2,8 @@ name: Fetch & Push Playlist
 
 on:
   schedule:
-    # Runs every 1 hour from 6:00 AM IST to 12:00 AM IST (Pause from 12:00 AM to 6:00 AM IST)
-    # 00:30 UTC to 18:30 UTC = 06:00 AM IST to 12:00 AM (Midnight) IST
     - cron: '30 0-18 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
   run-fetcher:
@@ -38,10 +36,7 @@ jobs:
           TARGET_PRIVATE_REPO: ${{ secrets.TARGET_PRIVATE_REPO }}
           TARGET_BRANCH: ${{ secrets.TARGET_BRANCH || 'main' }}
         run: |
-          # Prevent command tracing
           set +x
-
-          # Explicitly mask secrets in log output
           echo "::add-mask::${PRIVATE_REPO_PAT}"
           echo "::add-mask::${TARGET_PRIVATE_REPO}"
 
@@ -50,11 +45,9 @@ jobs:
             exit 1
           fi
 
-          # Setup clean git environment
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Clone target repo silently
           git clone --quiet "https://x-access-token:${PRIVATE_REPO_PAT}@github.com/${TARGET_PRIVATE_REPO}.git" target_private_repo > /dev/null 2>&1 || {
             echo "::error::Failed to connect to private repository. Verify permissions and PAT."
             exit 1
@@ -62,10 +55,8 @@ jobs:
 
           cd target_private_repo
 
-          # Copy and save generated playlist as live-event.m3u
           cp ../Playlist.m3u ./live-event.m3u
 
-          # Check for changes in live-event.m3u
           git add live-event.m3u
           if git diff --staged --quiet; then
             echo "No changes detected in live-event.m3u. Skipping push."
