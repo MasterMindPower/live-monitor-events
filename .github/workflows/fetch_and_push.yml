@@ -2,8 +2,9 @@ name: Fetch & Push Playlist
 
 on:
   schedule:
-    # Runs every 4 hours (at minute 0 of every 4th hour)
-    - cron: '0 */4 * * *'
+    # Runs every 1 hour from 6:00 AM IST to 12:00 AM IST (Pause from 12:00 AM to 6:00 AM IST)
+    # 00:30 UTC to 18:30 UTC = 06:00 AM IST to 12:00 AM (Midnight) IST
+    - cron: '30 0-18 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub Actions tab
 
 jobs:
