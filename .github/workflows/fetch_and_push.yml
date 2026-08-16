@@ -40,8 +40,8 @@ jobs:
           echo "::add-mask::${PRIVATE_REPO_PAT}"
           echo "::add-mask::${TARGET_PRIVATE_REPO}"
 
-          if [ ! -f "Playlist.m3u" ]; then
-            echo "::error::Playlist was not generated."
+          if [ ! -f "Playlist.m3u" ] && [ ! -f "raw_playlist.m3u" ]; then
+            echo "::error::Playlists were not generated."
             exit 1
           fi
 
@@ -55,17 +55,24 @@ jobs:
 
           cd target_private_repo
 
-          cp ../Playlist.m3u ./live-event.m3u
+          if [ -f "../Playlist.m3u" ]; then
+            cp ../Playlist.m3u ./live-event.m3u
+            git add live-event.m3u
+          fi
 
-          git add live-event.m3u
+          if [ -f "../raw_playlist.m3u" ]; then
+            cp ../raw_playlist.m3u ./raw_playlist.m3u
+            git add raw_playlist.m3u
+          fi
+
           if git diff --staged --quiet; then
-            echo "No changes detected in live-event.m3u. Skipping push."
+            echo "No changes detected in playlists. Skipping push."
           else
             TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-            git commit --quiet -m "Auto-update live-event.m3u [${TIMESTAMP}]"
+            git commit --quiet -m "Auto-update playlists [${TIMESTAMP}]"
             git push --quiet origin HEAD > /dev/null 2>&1 || {
               echo "::error::Failed to push updates to private repository."
               exit 1
             }
-            echo "Successfully updated and synced live-event.m3u to private repository."
+            echo "Successfully updated and synced playlists to private repository."
           fi
