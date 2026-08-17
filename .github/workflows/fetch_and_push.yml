@@ -40,7 +40,7 @@ jobs:
           echo "::add-mask::${PRIVATE_REPO_PAT}"
           echo "::add-mask::${TARGET_PRIVATE_REPO}"
 
-          if [ ! -f "Playlist.m3u" ] && [ ! -f "raw_playlist.m3u" ]; then
+          if [ ! -f "live-event.m3u" ] && [ ! -f "Playlist.m3u" ] && [ ! -f "raw_playlist.m3u" ]; then
             echo "::error::Playlists were not generated."
             exit 1
           fi
@@ -55,9 +55,17 @@ jobs:
 
           cd target_private_repo
 
-          if [ -f "../Playlist.m3u" ]; then
+          if [ -f "../live-event.m3u" ]; then
+            cp ../live-event.m3u ./live-event.m3u
+            git add live-event.m3u
+          elif [ -f "../Playlist.m3u" ]; then
             cp ../Playlist.m3u ./live-event.m3u
             git add live-event.m3u
+          fi
+
+          if [ -f "../Playlist.m3u" ]; then
+            cp ../Playlist.m3u ./Playlist.m3u
+            git add Playlist.m3u
           fi
 
           if [ -f "../raw_playlist.m3u" ]; then
