@@ -73,6 +73,11 @@ jobs:
             git add raw_playlist.m3u
           fi
 
+          if [ -f "../live-cookies.json" ]; then
+            cp ../live-cookies.json ./live-cookies.json
+            git add live-cookies.json
+          fi
+
           if git diff --staged --quiet; then
             echo "No changes detected in playlists. Skipping push."
           else
