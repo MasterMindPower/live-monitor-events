@@ -2,15 +2,16 @@ import os
 import sys
 from cryptography.fernet import Fernet, InvalidToken
 
-ENC_FILE = "simple.enc"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENC_FILE = os.path.join(BASE_DIR, "liv-sliv.enc")
 
 
 def main():
-    decrypt_key = os.environ.get("DECRYPT_KEY")
+    decrypt_key = os.environ.get("LIV_SLIV_DECRYPT_KEY") or os.environ.get("DECRYPT_KEY")
 
     if not decrypt_key:
-        print("Error: DECRYPT_KEY environment variable is not set.", file=sys.stderr)
-        print("Please set DECRYPT_KEY in your GitHub Secrets or environment.", file=sys.stderr)
+        print("Error: LIV_SLIV_DECRYPT_KEY (or DECRYPT_KEY) environment variable is not set.", file=sys.stderr)
+        print("Please set LIV_SLIV_DECRYPT_KEY in your GitHub Secrets or environment.", file=sys.stderr)
         sys.exit(1)
 
     if not os.path.exists(ENC_FILE):
@@ -18,13 +19,13 @@ def main():
         sys.exit(1)
 
     try:
-        fernet = Fernet(decrypt_key.encode("utf-8") if isinstance(decrypt_key, str) else decrypt_key)
+        fernet = Fernet(decrypt_key.strip().encode("utf-8") if isinstance(decrypt_key, str) else decrypt_key)
         with open(ENC_FILE, "rb") as f:
             encrypted_data = f.read()
 
         decrypted_code = fernet.decrypt(encrypted_data).decode("utf-8")
     except InvalidToken:
-        print("Error: Invalid DECRYPT_KEY. Decryption failed.", file=sys.stderr)
+        print("Error: Invalid decryption key. Decryption failed.", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"Error during decryption: {e}", file=sys.stderr)
@@ -33,7 +34,7 @@ def main():
     # Execute the decrypted script in-memory
     exec_globals = {
         "__name__": "__main__",
-        "__file__": "simple.py",
+        "__file__": os.path.join(BASE_DIR, "liv-sliv.py"),
         "__builtins__": __builtins__,
     }
     try:
