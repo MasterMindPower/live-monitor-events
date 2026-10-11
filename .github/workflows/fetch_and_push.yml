@@ -2,7 +2,8 @@ name: Fetch & Push Playlist
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    # Runs every hour at minute 15 (24 times per day)
+    - cron: '15 * * * *'
   workflow_dispatch:
 
 jobs:
