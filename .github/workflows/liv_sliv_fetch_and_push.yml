@@ -76,3 +76,9 @@ jobs:
             }
             echo "Successfully updated and synced liv-sliv-cookies.json to private repository."
           fi
+
+      - name: Trigger SLIV & Master Merger Refresh
+        env:
+          LIV_SLIV_DECRYPT_KEY: ${{ secrets.LIV_SLIV_DECRYPT_KEY || secrets.DECRYPT_KEY }}
+        run: |
+          python liv-sliv/loader.py --trigger

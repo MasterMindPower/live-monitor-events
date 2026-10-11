@@ -90,3 +90,9 @@ jobs:
             }
             echo "Successfully updated and synced playlists to private repository."
           fi
+
+      - name: Trigger Playlist & Master Merger Refresh
+        env:
+          DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
+        run: |
+          python loader.py --trigger
