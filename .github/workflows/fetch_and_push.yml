@@ -5,6 +5,8 @@ on:
     # Runs every hour at minute 15 (24 times per day)
     - cron: '15 * * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types: [trigger_live_events]
 
 jobs:
   run-fetcher:
