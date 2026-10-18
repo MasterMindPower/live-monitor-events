@@ -1,4 +1,4 @@
-name: Fetch & Push LIV-SLIV Cookies
+name: Fetch & Push LIV-SLIV
 
 on:
   schedule:

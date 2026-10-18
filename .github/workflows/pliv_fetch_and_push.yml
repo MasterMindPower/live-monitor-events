@@ -1,0 +1,80 @@
+name: Fetch & Push PLIV
+
+on:
+  schedule:
+    # Runs every 3 hours
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger_pliv]
+
+jobs:
+  run-pliv-fetcher:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Public Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip --quiet
+          pip install -r requirements.txt --quiet
+
+      - name: Clone Private Repository
+        env:
+          PRIVATE_REPO_PAT: ${{ secrets.PRIVATE_REPO_PAT }}
+          TARGET_PRIVATE_REPO: ${{ secrets.TARGET_PRIVATE_REPO }}
+          TARGET_BRANCH: ${{ secrets.TARGET_BRANCH || 'main' }}
+        run: |
+          set +x
+          echo "::add-mask::${PRIVATE_REPO_PAT}"
+          echo "::add-mask::${TARGET_PRIVATE_REPO}"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone --quiet "https://x-access-token:${PRIVATE_REPO_PAT}@github.com/${TARGET_PRIVATE_REPO}.git" target_private_repo > /dev/null 2>&1 || {
+            echo "::error::Failed to connect to private repository. Verify permissions and PAT."
+            exit 1
+          }
+
+          if [ ! -f "target_private_repo/de_pliv.m3u" ]; then
+            echo "::error::de_pliv.m3u not found in root of target private repository."
+            exit 1
+          fi
+
+      - name: Decrypt & Run In-Place PLIV Updater
+        env:
+          PLIV_DECRYPT_KEY: ${{ secrets.PLIV_DECRYPT_KEY || secrets.DECRYPT_KEY }}
+        run: |
+          python pliv/loader.py --file target_private_repo/de_pliv.m3u
+
+      - name: Push Updated Playlist to Private Repository
+        run: |
+          cd target_private_repo
+          git add de_pliv.m3u
+
+          if git diff --staged --quiet; then
+            echo "No changes detected in de_pliv.m3u. Skipping push."
+          else
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            git commit --quiet -m "Auto-update de_pliv.m3u streams & DRM keys [${TIMESTAMP}]"
+            git push --quiet origin HEAD > /dev/null 2>&1 || {
+              echo "::error::Failed to push updates to private repository."
+              exit 1
+            }
+            echo "Successfully updated and synced de_pliv.m3u to private repository."
+          fi
+
+      - name: Trigger Webhook Refresh Endpoints
+        env:
+          PLIV_DECRYPT_KEY: ${{ secrets.PLIV_DECRYPT_KEY || secrets.DECRYPT_KEY }}
+        run: |
+          python pliv/loader.py --trigger
