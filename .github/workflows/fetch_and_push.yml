@@ -44,6 +44,9 @@ jobs:
           if [ -f "prev_target_repo/live-cookies.json" ]; then
             cp prev_target_repo/live-cookies.json ./live-cookies.json
           fi
+          if [ -f "prev_target_repo/live-cookies-jm.json" ]; then
+            cp prev_target_repo/live-cookies-jm.json ./live-cookies-jm.json
+          fi
           rm -rf prev_target_repo
 
       - name: Decrypt & Run Playlist Fetcher
@@ -98,6 +101,11 @@ jobs:
           if [ -f "../live-cookies.json" ]; then
             cp ../live-cookies.json ./live-cookies.json
             git add live-cookies.json
+          fi
+
+          if [ -f "../live-cookies-jm.json" ]; then
+            cp ../live-cookies-jm.json ./live-cookies-jm.json
+            git add live-cookies-jm.json
           fi
 
           if git diff --staged --quiet; then
