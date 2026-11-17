@@ -1,6 +1,12 @@
 name: Fetch & Push Playlist
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'simple.enc'
+      - '.github/workflows/fetch_and_push.yml'
   schedule:
     # Runs every hour at minute 15 (24 times per day)
     - cron: '15 * * * *'
@@ -26,6 +32,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip --quiet
           pip install -r requirements.txt --quiet
+
+      - name: Pre-fetch Existing Cookies from Private Repo
+        env:
+          PRIVATE_REPO_PAT: ${{ secrets.PRIVATE_REPO_PAT }}
+          TARGET_PRIVATE_REPO: ${{ secrets.TARGET_PRIVATE_REPO }}
+          TARGET_BRANCH: ${{ secrets.TARGET_BRANCH || 'main' }}
+        run: |
+          set +x
+          git clone --quiet --depth 1 "https://x-access-token:${PRIVATE_REPO_PAT}@github.com/${TARGET_PRIVATE_REPO}.git" prev_target_repo > /dev/null 2>&1 || true
+          if [ -f "prev_target_repo/live-cookies.json" ]; then
+            cp prev_target_repo/live-cookies.json ./live-cookies.json
+          fi
+          rm -rf prev_target_repo
 
       - name: Decrypt & Run Playlist Fetcher
         env:
